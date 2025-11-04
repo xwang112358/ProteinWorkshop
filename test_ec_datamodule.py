@@ -19,14 +19,11 @@ from proteinworkshop.datasets.ec_proteinshake import ECPSDataModule
 from proteinworkshop.features.factory import ProteinFeaturiser
 
 
-def test_split(split_type: str, data_path: str):
-    """Test loading and using a specific split type"""
-    print("=" * 70)
-    print(f"Testing {split_type.upper()} split")
-    print("=" * 70)
-    
-    # Create feature transforms (CA Angles - used in many papers)
-    featuriser = ProteinFeaturiser(
+# Create feature transforms (CA Angles - used in many papers)
+# Note: In actual training, this is applied by the model, not the dataloader
+def create_featuriser():
+    """Create a featuriser for demonstration purposes"""
+    return ProteinFeaturiser(
         representation="CA",
         scalar_node_features=[
             "amino_acid_one_hot",
@@ -39,25 +36,26 @@ def test_split(split_type: str, data_path: str):
         scalar_edge_features=["edge_distance", "sequence_distance"],
         vector_edge_features=[],
     )
+
+
+def test_split(split_type: str, data_path: str):
+    """Test loading and using a specific split type"""
+    print("=" * 70)
+    print(f"Testing {split_type.upper()} split")
+    print("=" * 70)
     
-    print("\n1. Feature Configuration:")
-    print(f"   Representation: {featuriser.representation}")
-    print(f"   Edge types: {featuriser.edge_types}")
-    print(f"   Scalar node features: {featuriser.scalar_node_features}")
-    print(f"   Scalar edge features: {featuriser.scalar_edge_features}")
-    
-    # Create datamodule
+    # Create datamodule (without transforms - they're applied by the model)
     datamodule = ECPSDataModule(
         path=data_path,
         split_type=split_type,
         batch_size=4,  # Small batch for testing
         num_workers=0,  # No multiprocessing for simplicity
         in_memory=False,  # Don't load everything into memory
-        dataset_fraction=0.05,  # Use only 5% for quick testing
-        transforms=[featuriser],  # Add transforms!
+        dataset_fraction=0.01,  # Use only 1% for quick testing
+        transforms=None,  # No pre-transforms needed
     )
     
-    print("\n2. DataModule Configuration:")
+    print("\n1. DataModule Configuration:")
     print(f"   Split type: {datamodule.split_type}")
     print(f"   Data dir: {datamodule.data_dir}")
     print(f"   Split dir: {datamodule.split_dir}")
@@ -66,7 +64,7 @@ def test_split(split_type: str, data_path: str):
     print(f"   Batch size: {datamodule.batch_size}")
     
     # Setup datasets
-    print("\n3. Loading datasets...")
+    print("\n2. Loading datasets...")
     datamodule.setup("fit")
     
     # Get datasets
@@ -78,50 +76,81 @@ def test_split(split_type: str, data_path: str):
     print(f"   Val: {len(val_ds)} proteins")
     print(f"   Test: {len(test_ds)} proteins")
     print(f"   Total: {len(train_ds) + len(val_ds) + len(test_ds)} proteins")
-    print(train_ds.get(0))
     
-    # # Get dataloaders
-    # print("\n4. Creating dataloaders...")
-    # train_dl = datamodule.train_dataloader()
-    # print(f"   Train batches: {len(train_dl)}")
+    # Get dataloaders
+    print("\n3. Creating dataloaders...")
+    train_dl = datamodule.train_dataloader()
+    print(f"   Train batches: {len(train_dl)}")
     
-    # # Inspect first batch
-    # print("\n5. Inspecting first training batch:")
-    # for batch in train_dl:
-    #     print(f"   Batch type: {type(batch)}")
-    #     print(f"   Num graphs: {batch.num_graphs}")
-        
-    #     # Check for graph structure
-    #     if hasattr(batch, 'edge_index') and batch.edge_index is not None:
-    #         print(f"   ✓ Edge index shape: {batch.edge_index.shape}")
-    #         print(f"   ✓ Num edges: {batch.edge_index.shape[1]}")
-    #     else:
-    #         print("   ✗ No edge_index found!")
-        
-    #     # Check for node features
-    #     if hasattr(batch, 'x') and batch.x is not None:
-    #         print(f"   ✓ Node features shape: {batch.x.shape}")
-    #     else:
-    #         print("   ✗ No node features found!")
-        
-    #     # Check for edge features
-    #     if hasattr(batch, 'edge_attr') and batch.edge_attr is not None:
-    #         print(f"   ✓ Edge features shape: {batch.edge_attr.shape}")
-        
-    #     # Check for labels
-    #     if hasattr(batch, 'graph_y'):
-    #         print(f"   ✓ Graph labels: {batch.graph_y}")
-    #         label_min = batch.graph_y.min()
-    #         label_max = batch.graph_y.max()
-    #         print(f"   ✓ Label range: {label_min} - {label_max}")
-    #         print(f"   ✓ Unique labels: {batch.graph_y.unique().tolist()}")
-        
-    #     if hasattr(batch, 'id'):
-    #         print(f"   ✓ PDB IDs: {batch.id[:4]}...")  # Show first 4
-        
-    #     break  # Only show first batch
+    # Create featuriser (in actual training, this is part of the model)
+    print("\n4. Creating featuriser...")
+    featuriser = create_featuriser()
+    print(f"   Representation: {featuriser.representation}")
+    print(f"   Edge types: {featuriser.edge_types}")
+    print(f"   Node features: {featuriser.scalar_node_features}")
+    print(f"   Edge features: {featuriser.scalar_edge_features}")
     
-    # print(f"\n✓ {split_type.upper()} split loaded successfully!")
+    # Inspect first batch (transforms are applied during batching!)
+    print("\n5. Inspecting first training batch:")
+    for batch in train_dl:
+        print(f"   Raw batch type: {type(batch)}")
+        print(f"   Num graphs: {batch.num_graphs}")
+        print(f"   Raw batch keys: {list(batch.keys())}")
+        
+        # Apply featuriser (this is what the model does during training)
+        print("\n   Applying featuriser...")
+        batch = featuriser(batch)
+        print(f"   Featurised batch keys: {list(batch.keys())}")
+        
+        # Check for graph structure
+        if hasattr(batch, 'edge_index') and batch.edge_index is not None:
+            print(f"   ✓ Edge index shape: {batch.edge_index.shape}")
+            print(f"   ✓ Num edges: {batch.edge_index.shape[1]}")
+            avg_edges = batch.edge_index.shape[1] / batch.num_graphs
+            print(f"   ✓ Avg edges per graph: {avg_edges:.1f}")
+        else:
+            print("   ✗ No edge_index found!")
+        
+        # Check for node features
+        if hasattr(batch, 'x') and batch.x is not None:
+            print(f"   ✓ Node features shape: {batch.x.shape}")
+            print(f"   ✓ Node feature dim: {batch.x.shape[1]}")
+        else:
+            print("   ✗ No node features found!")
+        
+        # Check for edge features
+        if hasattr(batch, 'edge_attr') and batch.edge_attr is not None:
+            print(f"   ✓ Edge features shape: {batch.edge_attr.shape}")
+            print(f"   ✓ Edge feature dim: {batch.edge_attr.shape[1]}")
+        else:
+            print("   ℹ No edge_attr (edge features not requested)")
+        
+        # Check for labels
+        if hasattr(batch, 'graph_y'):
+            print(f"   ✓ Graph labels: {batch.graph_y}")
+            label_min = batch.graph_y.min()
+            label_max = batch.graph_y.max()
+            print(f"   ✓ Label range: {label_min} - {label_max}")
+            unique_labels = batch.graph_y.unique().tolist()
+            print(f"   ✓ Unique labels in batch: {unique_labels}")
+        
+        # Check for PDB IDs
+        if hasattr(batch, 'id'):
+            ids = batch.id if isinstance(batch.id, list) else [batch.id]
+            print(f"   ✓ PDB IDs (first 4): {ids[:4]}")
+        
+        # Summary
+        print("\n   Summary:")
+        print(f"   - Batch contains {batch.num_graphs} protein graphs")
+        total_nodes = batch.x.shape[0] if hasattr(batch, 'x') else 0
+        print(f"   - Total nodes: {total_nodes}")
+        if hasattr(batch, 'edge_index'):
+            total_edges = batch.edge_index.shape[1]
+            print(f"   - Total edges: {total_edges}")
+        
+        break  # Only show first batch
+    
+    print(f"\n✓ {split_type.upper()} split loaded successfully!")
     return datamodule
 
 
@@ -191,19 +220,21 @@ def main():
     
     # Test structure split
     print("\n")
-    # structure_dm = test_split("structure", data_path)
+    structure_dm = test_split("structure", data_path)
     
     # Compare splits
-    # compare_splits(random_dm, structure_dm)
+    compare_splits(random_dm, structure_dm)
     
     print("\n" + "=" * 70)
     print("ALL TESTS PASSED ✓")
     print("=" * 70)
     print("\nNext steps:")
     print("1. Train a model on random split:")
-    print("   workshop train dataset=ec_random encoder=gear_net features=ca_angles")
+    print("   workshop train dataset=ec_random encoder=gear_net \\")
+    print("            features=ca_angles")
     print("\n2. Train a model on structure split:")
-    print("   workshop train dataset=ec_structure encoder=gear_net features=ca_angles")
+    print("   workshop train dataset=ec_structure encoder=gear_net \\")
+    print("            features=ca_angles")
     print("\n3. Compare model performance between splits")
     print("=" * 70)
 
