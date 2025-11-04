@@ -134,6 +134,7 @@ outputs/
 # Data
 *.pdb
 *.pt
+*.avro
 *.ent
 chain_set_splits.json
 proteinworkshop/data/pdb.tar
