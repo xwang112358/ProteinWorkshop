@@ -48,7 +48,7 @@ def test_split(split_type: str, data_path: str):
     datamodule = ECPSDataModule(
         path=data_path,
         split_type=split_type,
-        batch_size=4,  # Small batch for testing
+        batch_size=2,  # Small batch for testing
         num_workers=0,  # No multiprocessing for simplicity
         in_memory=False,  # Don't load everything into memory
         dataset_fraction=0.01,  # Use only 1% for quick testing
