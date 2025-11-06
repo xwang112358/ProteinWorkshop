@@ -1,14 +1,23 @@
 """
-Script to create EC dataset from ProteinShake with multiple split types.
+Script to create protein classification datasets from ProteinShake.
 
-This script:
-1. Loads the EnzymeClassTask with both random and structure splits
-2. Saves preprocessed PDB files (chain A only) ONCE to ./proteinworkshop/data/ec_proteinshake/pdb/
+Supports two graph classification tasks:
+- ec_proteinshake: Enzyme Commission classification (EC classes 1-7)
+- scop_proteinshake: SCOP fold architecture classification
+
+All datasets use token_map from ProteinShake tasks to ensure label consistency.
+For example:
+  - EC token_map: {"1": 0, "2": 1, ..., "7": 6}
+  - SCOP token_map: {<scop_id>: <class_idx>, ...}
+
+For each dataset, the script:
+1. Loads the task with both random and structure splits
+2. Saves preprocessed PDB files (chain A only) ONCE to ./proteinworkshop/data/{dataset}/pdb/
 3. Creates train/val/test split CSV files for BOTH split types in separate subdirectories
-4. Creates a SINGLE shared labels CSV file mapping PDB IDs to EC class labels
+4. Creates a SINGLE shared labels CSV file mapping PDB IDs to class labels
 
 Directory structure created:
-ec_proteinshake/
+{dataset}/
 ├── pdb/                    # Shared PDB files (processed once)
 ├── random/                 # Random split CSVs
 │   ├── train_split.csv
@@ -26,24 +35,56 @@ Raw data is already saved in ./ps_raw by ProteinShake.
 from pathlib import Path
 
 import pandas as pd
-from proteinshake.tasks import EnzymeClassTask
+from proteinshake.tasks import EnzymeClassTask, StructuralClassTask
 from tqdm import tqdm
 
 from visualization import protein_to_pdb
 
 # ============================================================================
+# Dataset Configuration
+# ============================================================================
+DATASET_CONFIGS = {
+    "ec_proteinshake": {
+        "task_class": EnzymeClassTask,
+        "label_field": "EC",
+        "label_extractor": lambda x: x.split(".")[0],  # Extract EC class (1-7)
+        "description": "Enzyme Commission classification"
+    },
+    "scop_proteinshake": {
+        "task_class": StructuralClassTask,
+        "label_field": "SCOP-FA",
+        "label_extractor": lambda x: x,  # Use full SCOP-FA identifier
+        "description": "SCOP fold architecture classification"
+    }
+}
+
+# ============================================================================
 # Configuration
 # ============================================================================
-DATASET_NAME = "ec_proteinshake"
+# CHANGE THIS to select which dataset to create:
+# - "ec_proteinshake": Enzyme Commission (EC 1-7)
+# - "scop_proteinshake": SCOP fold architecture
+DATASET_NAME = "scop_proteinshake"
+
 RAW_DATA_DIR = "./ps_raw"  # ProteinShake raw data location
 OUTPUT_BASE_DIR = f"./proteinworkshop/data/{DATASET_NAME}"
 SPLIT_TYPES = ["random", "structure"]  # Both split types to generate
 SIMILARITY_THRESHOLD = 0.7  # For structure-based split
 
+# Validate dataset name
+if DATASET_NAME not in DATASET_CONFIGS:
+    valid_datasets = list(DATASET_CONFIGS.keys())
+    raise ValueError(
+        f"Unknown dataset: {DATASET_NAME}. Choose from: {valid_datasets}"
+    )
+
+dataset_config = DATASET_CONFIGS[DATASET_NAME]
+
 # ============================================================================
 # Setup directories
 # ============================================================================
 print(f"Setting up {DATASET_NAME} dataset with multiple split types...")
+print(f"Description: {dataset_config['description']}")
 print(f"Raw data location: {RAW_DATA_DIR}")
 print(f"Output directory: {OUTPUT_BASE_DIR}")
 print(f"Split types to generate: {SPLIT_TYPES}")
@@ -62,6 +103,7 @@ for split_type in SPLIT_TYPES:
 # ============================================================================
 all_protein_info = {}  # Dictionary to store protein info for each split type
 all_labels = {}  # Dictionary to collect all labels
+token_map = None  # Will be populated from task
 
 for split_type in SPLIT_TYPES:
     print("\n" + "=" * 70)
@@ -69,13 +111,23 @@ for split_type in SPLIT_TYPES:
     print("=" * 70)
     
     # Load ProteinShake task with current split type
-    print(f"\nLoading EnzymeClassTask with {split_type} split...")
-    task = EnzymeClassTask(
-        split=split_type, 
-        split_similarity_threshold=SIMILARITY_THRESHOLD, 
+    print(f"\nLoading {dataset_config['task_class'].__name__} "
+          f"with {split_type} split...")
+    task = dataset_config["task_class"](
+        split=split_type,
+        split_similarity_threshold=SIMILARITY_THRESHOLD,
         root=RAW_DATA_DIR
     )
     dataset = task.dataset
+    
+    # Get token map from task (all datasets have token_map)
+    if token_map is None:
+        token_map = task.token_map
+        print(f"Loaded token map with {len(token_map)} classes")
+        print(f"Sample mappings: {dict(list(token_map.items())[:5])}")
+
+    # print(token_map)
+    # exit()
 
     # Get split indices
     train_idx = task.train_index
@@ -85,7 +137,8 @@ for split_type in SPLIT_TYPES:
     print(f"Train set size: {len(train_idx)}")
     print(f"Validation set size: {len(val_idx)}")
     print(f"Test set size: {len(test_idx)}")
-    print(f"Total proteins: {len(train_idx) + len(val_idx) + len(test_idx)}")
+    total = len(train_idx) + len(val_idx) + len(test_idx)
+    print(f"Total proteins: {total}")
 
     # Process proteins
     print(f"\nProcessing proteins for {split_type} split...")
@@ -97,9 +150,19 @@ for split_type in SPLIT_TYPES:
     for idx, protein in enumerate(tqdm(protein_generator, desc=desc)):
         # Extract protein information
         protein_id = protein["protein"]["ID"].lower()
-        ec_full = protein["protein"]["EC"]
-        ec_class = ec_full.split(".")[0]  # Get first digit (EC class: 1-7)
-        label = int(ec_class) - 1  # Convert to 0-indexed (EC 1-7 -> 0-6)
+        
+        # Extract label value based on dataset type
+        label_value = protein["protein"][dataset_config["label_field"]]
+        
+        # Extract the label key that will be used to look up in token_map
+        label_key = dataset_config["label_extractor"](label_value)
+        
+        # Convert to integer label using token_map
+        if label_key not in token_map:
+            print(f"Warning: Label key '{label_key}' not found in token_map "
+                  f"for protein {protein_id}")
+            continue
+        label = token_map[label_key]
         
         # Determine which split this protein belongs to
         if idx in train_idx:
@@ -213,8 +276,7 @@ print(f"  └── labels.csv ({len(df_labels)} labels)")
 print("\nLabel distribution (shared across all splits):")
 label_counts = df_labels["label"].value_counts().sort_index()
 for label, count in label_counts.items():
-    ec_num = label + 1  # Convert back to EC class (1-7)
-    print(f"  EC Class {ec_num} (label {label}): {count} proteins")
+    print(f"  Class {label}: {count} proteins")
 
 print(f"\nNumber of classes: {df_labels['label'].nunique()}")
 print(f"Label range: {df_labels['label'].min()} - {df_labels['label'].max()}")
@@ -233,8 +295,9 @@ for split_type in SPLIT_TYPES:
 print("\n✓ Dataset creation complete!")
 print("\nNext steps:")
 print(f"1. Verify files in {OUTPUT_BASE_DIR}/")
-print("2. Create proteinworkshop/datasets/ec_proteinshake.py")
-print("3. Create proteinworkshop/config/dataset/ec_random.yaml")
-print("4. Create proteinworkshop/config/dataset/ec_structure.yaml")
-print("5. Run: python proteinworkshop/datasets/ec_proteinshake.py (to test)")
+dataset_prefix = DATASET_NAME.replace("_proteinshake", "")
+print(f"2. Create proteinworkshop/datasets/{DATASET_NAME}.py")
+print(f"3. Create proteinworkshop/config/dataset/{dataset_prefix}_random.yaml")
+print(f"4. Create proteinworkshop/config/dataset/{dataset_prefix}_structure.yaml")
+print(f"5. Run: python proteinworkshop/datasets/{DATASET_NAME}.py (to test)")
 print("=" * 70)

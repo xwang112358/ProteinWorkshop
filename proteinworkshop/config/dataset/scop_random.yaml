@@ -1,10 +1,10 @@
-name: "ec_random"  # Dataset name for logging and output directories
+name: "scop_random"  # Dataset name for logging and output directories
 
 datamodule:
-  _target_: proteinworkshop.datasets.ec_proteinshake.ECPSDataModule
-  path: ${env.paths.data}/ec_proteinshake/ # Directory where the dataset is stored
+  _target_: proteinworkshop.datasets.scop_proteinshake.SCOPPSDataModule
+  path: ${env.paths.data}/scop_proteinshake/ # Directory where the dataset is stored
   split_type: "random" # Type of split to use (random or structure)
-  pdb_dir: ${env.paths.data}/ec_proteinshake/pdb/ # Directory where raw PDB files are stored
+  pdb_dir: ${env.paths.data}/scop_proteinshake/pdb/ # Directory where raw PDB files are stored
   format: "pdb" # Format of the raw PDB files
   batch_size: 32 # Batch size for dataloader
   pin_memory: True # Pin memory for dataloader
@@ -15,4 +15,4 @@ datamodule:
   overwrite: False # Whether to overwrite cached processed files
   in_memory: False # Load entire dataset into memory (set to False to avoid index issues)
 
-num_classes: 7 # Number of EC classes (0-6 corresponding to EC 1-7)
+num_classes: ??? # Number of SCOP fold architecture classes (will be determined from data)
