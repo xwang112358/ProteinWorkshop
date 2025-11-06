@@ -22,7 +22,7 @@ class RemoveMissingCa(T.BaseTransform):
         self.fill_value = fill_value
         self.ca_idx = ca_idx
 
-    def __call__(self, data):
+    def forward(self, data):
         """Remove residues with missing CA atoms from a protein structure.
 
         :param data: Protein data object.
