@@ -5,7 +5,7 @@ features:
   vector_node_features: ["orientation"]
   vector_edge_features: ["edge_vectors"]
 # global config #
-num_layers: 6 # Number of layers in the model
+num_layers: 3 # Number of layers in the model
 emb_dim: 128
 node_s_emb_dim: ${.emb_dim} # Dimension of the node state embeddings
 node_v_emb_dim: 16 # Dimension of the node vector embeddings

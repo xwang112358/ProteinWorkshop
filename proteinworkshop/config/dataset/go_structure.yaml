@@ -1,0 +1,18 @@
+name: "go_structure"  # Dataset name for logging and output directories
+
+datamodule:
+  _target_: proteinworkshop.datasets.go_proteinshake.GOPSDataModule
+  path: ${env.paths.data}/go_proteinshake/ # Directory where the dataset is stored
+  split_type: "structure" # Type of split to use (random or structure)
+  pdb_dir: ${env.paths.data}/go_proteinshake/pdb/ # Directory where raw PDB files are stored
+  format: "pdb" # Format of the raw PDB files
+  batch_size: 32 # Batch size for dataloader
+  pin_memory: True # Pin memory for dataloader
+  num_workers: 8 # Number of workers for dataloader
+  dataset_fraction: 1.0 # Fraction of the dataset to use
+  shuffle_labels: False # Whether to shuffle labels for permutation testing
+  transforms: ${transforms} # Transforms to apply to dataset examples
+  overwrite: False # Whether to overwrite cached processed files
+  in_memory: False # Load entire dataset into memory
+
+num_classes: 5127  # Number of unique GO terms (adjust based on your actual data)
