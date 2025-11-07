@@ -1,21 +1,21 @@
 _target_: proteinworkshop.features.factory.ProteinFeaturiser
 representation: CA
 scalar_node_features:
-  - amino_acid_one_hot
+  # - amino_acid_one_hot
   - dihedrals
-  - sidechain_torsions
   - alpha
   - kappa
   #- surface_1_3_5_10
+  # - sidechain_torsions
 vector_node_features: []
 edge_types:
-  - knn_10
-  - eps_8
+  - knn_30
+  # - eps_8
   #- seq_forward
   #- seq_backward
 scalar_edge_features:
   - edge_distance
-  - edge_type
-  - node_features
-  - sequence_distance
+  # - edge_type
+  # - node_features
+  # - sequence_distance
 vector_edge_features: []

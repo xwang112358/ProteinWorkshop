@@ -25,3 +25,7 @@ class MultiHotLabelEncoding(T.BaseTransform):
         labels[:, data.graph_y] = 1
         data.graph_y = labels
         return data
+
+    def forward(self, data: Union[Protein, Data]) -> Union[Protein, Data]:
+        """Forward method required by BaseTransform."""
+        return self.__call__(data)
