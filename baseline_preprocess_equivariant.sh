@@ -10,6 +10,7 @@ mkdir -p logs/preprocess
 declare -A DATASET_TASKS
 DATASET_TASKS[go_proteinshake]="multilabel_graph_classification"
 DATASET_TASKS[scop_proteinshake]="multiclass_graph_classification"
+DATASET_TASKS[ec_proteinshake]="multiclass_graph_classification"
 
 # Splits
 SPLITS=("random" "structure")
@@ -17,6 +18,12 @@ SPLITS=("random" "structure")
 # Model (only GVP)
 MODEL="gvp"
 FEATURES="all_equivariant_ca"
+
+# Clean corrupted cached files before running
+# echo "Cleaning potentially corrupted cache files..."
+rm -rf proteinworkshop/data/go_proteinshake/processed/*
+rm -rf proteinworkshop/data/scop_proteinshake/processed/*
+rm -rf proteinworkshop/data/ec_proteinshake/processed/*
 
 # Run experiments sequentially
 for dataset in "${!DATASET_TASKS[@]}"; do
@@ -37,6 +44,8 @@ for dataset in "${!DATASET_TASKS[@]}"; do
             features=${FEATURES} \
             test=True \
             trainer.max_epochs=1 \
+            dataset.datamodule.num_workers=0 \
+            dataset.datamodule.overwrite=True \
             hydra.run.dir="outputs/train/${dataset_config}/${MODEL}" \
             > "${log_file}" 2>&1
     done

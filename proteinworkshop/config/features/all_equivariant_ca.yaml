@@ -1,7 +1,7 @@
 _target_: proteinworkshop.features.factory.ProteinFeaturiser
 representation: CA
 scalar_node_features:
-  - amino_acid_one_hot
+  # - amino_acid_one_hot
   - dihedrals
 vector_node_features: ["orientation"]
 edge_types:
