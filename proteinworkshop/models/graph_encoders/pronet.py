@@ -21,7 +21,7 @@ from proteinworkshop.models.graph_encoders.layers.pronet_features import (
     AngleEmbedding,
     ThetaPhiEmbedding,
 )
-from proteinworkshop.types import EncoderOutput
+from proteinworkshop.custom_types import EncoderOutput
 
 
 class ProNetModel(nn.Module):

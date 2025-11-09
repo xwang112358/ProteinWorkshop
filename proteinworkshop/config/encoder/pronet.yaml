@@ -1,5 +1,5 @@
 _target_: proteinworkshop.models.graph_encoders.pronet.ProNetModel
-num_blocks: 4 # Number of interaction blocks
+num_blocks: 3 # Number of interaction blocks
 hidden_channels: 128 # Hidden embedding dimension
 mid_emb: 64 # Intermediate embedding dimension for geometric features
 num_radial: 6 # Number of radial basis functions
