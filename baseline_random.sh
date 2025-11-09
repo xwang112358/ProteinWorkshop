@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# GPU IDs to use (ordered) — only GPUs 6 and 7
-GPUS=(6 7)
+# GPU IDs to use (ordered) — only GPUs 5 and 4
+GPUS=(5 4)
 
 # Create logs directory
-mkdir -p "logs/baselines-117"
+mkdir -p "logs/baselines-118"
 
 # Datasets and their task types (lookup)
 declare -A DATASET_TASKS=(
@@ -24,11 +24,11 @@ SPLITS=("random")
 declare -A MODEL_FEATURES=(
   [gcpnet]="all_equivariant_ca"
   [gear_net]="all_invariant_ca"
-  [gearnet_edge]="all_invariant_ca"
+  [gear_net_edge]="all_invariant_ca"
 )
 
 # Deterministic model iteration order — gvp removed
-MODELS_ORDER=(gcpnet gear_net gearnet_edge)
+MODELS_ORDER=(gcpnet gear_net gear_net_edge)
 
 # Counter for GPU assignment
 gpu_idx=0
@@ -36,17 +36,28 @@ gpu_idx=0
 # Run experiments
 for dataset in "${DATASETS_ORDER[@]}"; do
   task="${DATASET_TASKS[$dataset]}"
-  # Remove _proteinshake suffix for dataset config name
   dataset_short="${dataset/_proteinshake/}"
 
   for split in "${SPLITS[@]}"; do
     dataset_config="${dataset_short}_${split}"
 
     for model in "${MODELS_ORDER[@]}"; do
+      # Skip if log already exists (meaning it was run)
+      log_file="logs/baselines-118/${dataset_config}_${model}.log"
+      if [[ -f "$log_file" ]]; then
+        echo "Skipping: ${model} on ${dataset_config} (log exists)"
+        continue
+      fi
+
+      # Safety check for MODEL_FEATURES
+      if [[ -z ${MODEL_FEATURES[$model]+_} ]]; then
+        echo "ERROR: MODEL_FEATURES missing entry for model '$model'" >&2
+        exit 1
+      fi
+
       features="${MODEL_FEATURES[$model]}"
       gpu="${GPUS[$gpu_idx]}"
 
-      log_file="logs/baselines-117/${dataset_config}_${model}.log"
       echo "Running: ${model} on ${dataset_config} (GPU ${gpu}) -> ${log_file}"
 
       CUDA_VISIBLE_DEVICES="${gpu}" python proteinworkshop/train.py \
@@ -55,13 +66,13 @@ for dataset in "${DATASETS_ORDER[@]}"; do
         "encoder=${model}" \
         "features=${features}" \
         "test=True" \
-        "hydra.run.dir=outputs/train-117/${dataset_config}/${model}" \
+        "hydra.run.dir=outputs/train-118/${dataset_config}/${model}" \
         >"${log_file}" 2>&1 &
 
-      # Move to next GPU (max parallelism = number of GPUs = 2)
+      # Move to next GPU
       gpu_idx=$(( (gpu_idx + 1) % ${#GPUS[@]} ))
 
-      # When we've dispatched to all GPUs, wait for any one job to finish
+      # When we've dispatched to all GPUs, wait for one to finish
       if (( gpu_idx == 0 )); then
         wait -n
       fi

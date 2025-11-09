@@ -11,6 +11,6 @@ datamodule:
   shuffle_labels: False # Whether to shuffle labels for permutation testing
   transforms: ${transforms} # Transforms to apply to dataset examples
   overwrite: False # Whether to overwrite cached processed files
-  in_memory: True # Load entire dataset into memory (set to False to avoid index issues)
+  in_memory: False # Load entire dataset into memory (set to False to avoid index issues)
 
 num_classes: 7 # Number of EC classes (0-6 corresponding to EC 1-7)

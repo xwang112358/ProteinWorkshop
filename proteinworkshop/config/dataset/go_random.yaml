@@ -13,6 +13,6 @@ datamodule:
   shuffle_labels: False # Whether to shuffle labels for permutation testing
   transforms: ${transforms} # Transforms to apply to dataset examples
   overwrite: False # Whether to overwrite cached processed files
-  in_memory: True # Load entire dataset into memory
+  in_memory: False # Load entire dataset into memory
 
 num_classes: 5127  # Number of unique GO terms (adjust based on your actual data)
