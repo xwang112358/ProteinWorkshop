@@ -1,0 +1,11 @@
+_target_: proteinworkshop.features.factory.ProteinFeaturiser
+representation: CA  # CA representation preserves batch.coords for N, C extraction
+scalar_node_features:
+  - amino_acid_one_hot  # 20D - replaces DIVE's custom amino acid embedding
+  - dihedrals  # 6D - backbone dihedral angles (phi, psi, omega in sin/cos)
+  - sidechain_torsions  # 8D - sidechain chi angles (chi1-chi4 in sin/cos)
+vector_node_features: []
+edge_types:
+  - knn_30  # Pre-compute KNN edges (similar to radius graph with cutoff=10Å)
+scalar_edge_features: []
+vector_edge_features: []

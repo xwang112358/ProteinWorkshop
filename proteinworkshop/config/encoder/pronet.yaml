@@ -1,0 +1,14 @@
+_target_: proteinworkshop.models.graph_encoders.pronet.ProNetModel
+num_blocks: 4 # Number of interaction blocks
+hidden_channels: 128 # Hidden embedding dimension
+mid_emb: 64 # Intermediate embedding dimension for geometric features
+num_radial: 6 # Number of radial basis functions
+num_spherical: 2 # Number of spherical harmonic degrees
+cutoff: 10.0 # Cutoff distance for normalization
+int_emb_layers: 3 # Number of layers in each interaction block
+out_layers: 2 # Number of output layers
+num_pos_emb: 16 # Dimension of positional embeddings
+dropout: 0.0 # Dropout probability
+pool: sum # Pooling method for graph-level embeddings ('sum', 'mean', 'max')
+data_augment_eachlayer: false # If True, add Gaussian noise to node features
+euler_noise: false # If True, add noise to Euler angles
