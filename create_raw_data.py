@@ -35,7 +35,7 @@ Raw data is already saved in ./ps_raw by ProteinShake.
 from pathlib import Path
 
 import pandas as pd
-from proteinshake.tasks import EnzymeClassTask, StructuralClassTask
+from proteinshake.tasks import EnzymeClassTask, StructuralClassTask, ProteinFamilyTask
 from tqdm import tqdm
 
 from visualization import protein_to_pdb
@@ -55,6 +55,12 @@ DATASET_CONFIGS = {
         "label_field": "SCOP-FA",
         "label_extractor": lambda x: x,  # Use full SCOP-FA identifier
         "description": "SCOP fold architecture classification"
+    },
+    "pf_proteinshake": {
+        "task_class": ProteinFamilyTask,
+        "label_field": "Pfam",
+        "label_extractor": lambda x: x[0],  
+        "description": "Protein Family classification"
     }
 }
 
@@ -64,7 +70,7 @@ DATASET_CONFIGS = {
 # CHANGE THIS to select which dataset to create:
 # - "ec_proteinshake": Enzyme Commission (EC 1-7)
 # - "scop_proteinshake": SCOP fold architecture
-DATASET_NAME = "scop_proteinshake"
+DATASET_NAME = "pf_proteinshake"
 
 RAW_DATA_DIR = "./ps_raw"  # ProteinShake raw data location
 OUTPUT_BASE_DIR = f"./proteinworkshop/data/{DATASET_NAME}"

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # GPU IDs to use (ordered) — only GPUs 6 and 7
-GPUS=(6 7)
+GPUS=(5 6 7)
 
 # Create logs directory
 mkdir -p "logs/baselines-118"
@@ -35,6 +35,12 @@ gpu_idx=0
 
 # Run experiments
 for dataset in "${DATASETS_ORDER[@]}"; do
+  # Skip if dataset not defined in DATASET_TASKS
+  if [[ -z ${DATASET_TASKS[$dataset]+_} ]]; then
+    echo "Skipping: ${dataset} (not defined in DATASET_TASKS)"
+    continue
+  fi
+
   task="${DATASET_TASKS[$dataset]}"
   dataset_short="${dataset/_proteinshake/}"
 

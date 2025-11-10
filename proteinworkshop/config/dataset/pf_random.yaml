@@ -1,18 +1,18 @@
-name: "scop_random"  # Dataset name for logging and output directories
+name: "pf_random"  # Dataset name for logging and output directories
 
 datamodule:
-  _target_: proteinworkshop.datasets.scop_proteinshake.SCOPPSDataModule
-  path: ${env.paths.data}/scop_proteinshake/ # Directory where the dataset is stored
+  _target_: proteinworkshop.datasets.pf_proteinshake.PFPSDataModule
+  path: ${env.paths.data}/pf_proteinshake/ # Directory where the dataset is stored
   split_type: "random" # Type of split to use (random or structure)
-  pdb_dir: ${env.paths.data}/scop_proteinshake/pdb/ # Directory where raw PDB files are stored
+  pdb_dir: ${env.paths.data}/pf_proteinshake/pdb/ # Directory where raw PDB files are stored
   format: "pdb" # Format of the raw PDB files
   batch_size: 32 # Batch size for dataloader
   pin_memory: True # Pin memory for dataloader
-  num_workers: 2 # Number of workers for dataloader
+  num_workers: 8 # Number of workers for dataloader
   dataset_fraction: 1.0 # Fraction of the dataset to use
   shuffle_labels: False # Whether to shuffle labels for permutation testing
   transforms: ${transforms} # Transforms to apply to dataset examples
   overwrite: False # Whether to overwrite cached processed files
-  in_memory: True # Load entire dataset into memory (set to False to avoid index issues)
+  in_memory: False # Load entire dataset into memory (set to False to avoid index issues)
 
-num_classes: 3042
+num_classes: 5163
