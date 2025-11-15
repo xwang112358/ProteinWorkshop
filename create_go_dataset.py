@@ -45,8 +45,8 @@ from visualization import protein_to_pdb
 # Configuration
 # ============================================================================
 DATASET_NAME = "go_proteinshake"
-RAW_DATA_DIR = "./ps_raw"  # ProteinShake raw data location
-OUTPUT_BASE_DIR = f"./proteinworkshop/data/{DATASET_NAME}"
+RAW_DATA_DIR = "/data/oliver_lab/wangx86/ps_raw"  # ProteinShake raw data location
+OUTPUT_BASE_DIR = f"/data/oliver_lab/wangx86/ps_data/{DATASET_NAME}"
 SPLIT_TYPES = ["random", "structure"]  # Both split types to generate
 SIMILARITY_THRESHOLD = 0.7  # For structure-based split
 

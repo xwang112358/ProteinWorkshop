@@ -6,9 +6,9 @@ datamodule:
   split_type: "structure" # Type of split to use (random or structure)
   pdb_dir: ${env.paths.data}/go_proteinshake/pdb/ # Directory where raw PDB files are stored
   format: "pdb" # Format of the raw PDB files
-  batch_size: 64 # Batch size for dataloader
+  batch_size: 128 # Batch size for dataloader
   pin_memory: True # Pin memory for dataloader
-  num_workers: 2 # Number of workers for dataloader
+  num_workers: 4 # Number of workers for dataloader
   dataset_fraction: 1.0 # Fraction of the dataset to use
   shuffle_labels: False # Whether to shuffle labels for permutation testing
   transforms: ${transforms} # Transforms to apply to dataset examples

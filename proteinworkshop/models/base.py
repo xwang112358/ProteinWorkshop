@@ -1,4 +1,5 @@
 import abc
+import time
 from typing import Any, Callable, Dict, List, Literal, Optional, Set, Union
 
 import hydra
@@ -445,6 +446,10 @@ class BenchMarkModel(BaseModel):
         )
         logger.info(self.task_transform)
 
+        # Initialize timing for tracking training time per 50 steps
+        self.last_log_time = None
+        self.last_log_step = 0
+
         self.save_hyperparameters()
 
         self.example_input_array = self._create_example_batch()
@@ -704,6 +709,18 @@ class BenchMarkModel(BaseModel):
         :return: Loss
         :rtype: Optional[torch.Tensor]
         """
+        # Track training time per 50 steps
+        current_step = self.global_step
+        if self.last_log_time is None:
+            self.last_log_time = time.time()
+            self.last_log_step = current_step
+        elif (current_step - self.last_log_step) >= 50:
+            current_time = time.time()
+            time_for_50_steps = current_time - self.last_log_time
+            self.log("train/time(s)", time_for_50_steps, prog_bar=False)
+            self.last_log_time = current_time
+            self.last_log_step = current_step
+        
         return self._do_step_catch_oom(batch, batch_idx, "train")
 
     def validation_step(

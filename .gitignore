@@ -11,6 +11,7 @@ runs/
 
 # Distribution / packaging
 .Python
+pw/
 build/
 develop-eggs/
 dist/

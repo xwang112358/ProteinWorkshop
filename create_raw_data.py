@@ -70,7 +70,7 @@ DATASET_CONFIGS = {
 # CHANGE THIS to select which dataset to create:
 # - "ec_proteinshake": Enzyme Commission (EC 1-7)
 # - "scop_proteinshake": SCOP fold architecture
-DATASET_NAME = "pf_proteinshake"
+DATASET_NAME = "ec_proteinshake"
 
 RAW_DATA_DIR = "./ps_raw"  # ProteinShake raw data location
 OUTPUT_BASE_DIR = f"./proteinworkshop/data/{DATASET_NAME}"
@@ -82,7 +82,7 @@ if DATASET_NAME not in DATASET_CONFIGS:
     valid_datasets = list(DATASET_CONFIGS.keys())
     raise ValueError(
         f"Unknown dataset: {DATASET_NAME}. Choose from: {valid_datasets}"
-    )
+    ) 
 
 dataset_config = DATASET_CONFIGS[DATASET_NAME]
 

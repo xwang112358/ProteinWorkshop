@@ -67,6 +67,7 @@ for dataset in "${DATASETS_ORDER[@]}"; do
         "features=${features}" \
         "test=True" \
         "hydra.run.dir=outputs/train-118/${dataset_config}/${model}" \
+        "trainer.max_epochs=60" \
         >"${log_file}" 2>&1 &
 
       # Move to next GPU
