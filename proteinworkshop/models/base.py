@@ -766,6 +766,20 @@ class BenchMarkModel(BaseModel):
         """
         return self._do_step(batch, batch_idx, "test")
 
+    def on_train_epoch_end(self) -> None:
+        """Reset training metrics at end of epoch to prevent accumulation."""
+        for metric_name in self.metric_names:
+            for output in self.config.task.output:
+                if hasattr(self, f"train_{output}_{metric_name}"):
+                    getattr(self, f"train_{output}_{metric_name}").reset()
+
+    def on_validation_epoch_end(self) -> None:
+        """Reset validation metrics at end of epoch to prevent accumulation."""
+        for metric_name in self.metric_names:
+            for output in self.config.task.output:
+                if hasattr(self, f"val_{output}_{metric_name}"):
+                    getattr(self, f"val_{output}_{metric_name}").reset()
+
     def backward(self, loss: torch.Tensor, *args: Any, **kwargs: Dict[str, Any]):
         """Overrides Lightning's `backward` hook to add an out-of-memory (OOM) check.
 

@@ -343,6 +343,7 @@ class GOPSDataModule(ProteinDataModule):
             drop_last=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def val_dataloader(self) -> ProteinDataLoader:
@@ -356,6 +357,7 @@ class GOPSDataModule(ProteinDataModule):
             drop_last=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def test_dataloader(self) -> ProteinDataLoader:
@@ -369,6 +371,7 @@ class GOPSDataModule(ProteinDataModule):
             drop_last=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
 

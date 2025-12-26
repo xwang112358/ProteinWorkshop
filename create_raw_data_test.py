@@ -70,12 +70,13 @@ DATASET_CONFIGS = {
 # CHANGE THIS to select which dataset to create:
 # - "ec_proteinshake": Enzyme Commission (EC 1-7)
 # - "scop_proteinshake": SCOP fold architecture
-DATASET_NAME = "scop_proteinshake"
+DATASET_NAME = "ec_proteinshake"
 
 RAW_DATA_DIR = "/data/oliver_lab/wangx86/ps_raw"  # ProteinShake raw data location
-OUTPUT_BASE_DIR = f"/data/oliver_lab/wangx86/ps_data/{DATASET_NAME}"
+OUTPUT_BASE_DIR = f"./standard_featurization/data/{DATASET_NAME}"
 SPLIT_TYPES = ["random", "structure"]  # Both split types to generate
 SIMILARITY_THRESHOLD = 0.7  # For structure-based split
+TEST_LIMIT = 100  # Only process this many proteins for testing
 
 # Validate dataset name
 if DATASET_NAME not in DATASET_CONFIGS:
@@ -147,13 +148,14 @@ for split_type in SPLIT_TYPES:
     print(f"Total proteins: {total}")
 
     # Process proteins
-    print(f"\nProcessing proteins for {split_type} split...")
+    print(f"\nProcessing proteins for {split_type} split (limit: {TEST_LIMIT})...")
     protein_info = []  # List of dicts: {pdb_id, split, label}
     
     protein_generator = dataset.proteins(resolution="atom")
     
     desc = f"Processing {split_type}"
-    for idx, protein in enumerate(tqdm(protein_generator, desc=desc)):
+    processed_count = 0
+    for idx, protein in enumerate(tqdm(protein_generator, desc=desc, total=TEST_LIMIT)):
         # Extract protein information
         protein_id = protein["protein"]["ID"].lower()
         
@@ -195,6 +197,12 @@ for split_type in SPLIT_TYPES:
         
         # Collect label for shared labels file
         all_labels[protein_id] = label
+        
+        # Check if we've reached the test limit
+        processed_count += 1
+        if processed_count >= TEST_LIMIT:
+            print(f"\nReached test limit of {TEST_LIMIT} proteins. Stopping.")
+            break
     
     # Store protein info for this split type
     all_protein_info[split_type] = protein_info
